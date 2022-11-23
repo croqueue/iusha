@@ -1,15 +1,14 @@
 #include <stdbool.h>
-#include <stdio.h>
 #include "iusha/iusha.h"
 #include "iusha/tests/helpers.h"
 
 static const char * expected_digests[5] = 
 {
-    "a9993e364706816aba3e25717850c26c9cd0d89d",
-    "da39a3ee5e6b4b0d3255bfef95601890afd80709",
-    "84983e441c3bd26ebaae4aa1f95129e5e54670f1",
-    "a49b2446a02c645bf419f995b67091253a04a259",
-    "34aa973cd4c4daa4f61eeb2bdbad27316534016f"
+    "4634270f707b6a54daae7530460842e20e37ed265ceee9a43e8924aa",
+    "6ed0dd02806fa89e25de060c19d3ac86cabb87d6a0ddd05c333b84f4",
+    "e5302d6d54bb242275d1e7622d68df6eb02dedd13f564c13dbda2174",
+    "23fec5bb94d60b23308192640b0c453335d664734fe40e7268674af9",
+    "37ab331d76f0d36de422bd0edeb22a28accd487b7a8453ae965dd287"
 };
 
 int main()
@@ -23,10 +22,10 @@ int main()
         contexts[i] = TestContext_Init(
             i + 1, 
             expected_digests[i], 
-            SHA1_DIGEST_LEN
+            SHA512_224_DIGEST_LEN
         );
         
-        success = success && TestContext_Run(contexts[i], sha1);
+        success = success && TestContext_RunGeneric(contexts[i], SHA512_224);
         TestContext_Free(contexts[i]);
     }
 

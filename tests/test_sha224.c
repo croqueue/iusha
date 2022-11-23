@@ -1,36 +1,33 @@
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
+#include <stdbool.h>
 #include "iusha/iusha.h"
-#include "internal.h"
+#include "iusha/tests/helpers.h"
 
-extern char * test_messages[5];
+static const char * expected_digests[5] = 
+{
+    "23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7",
+    "d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f",
+    "75388b16512776cc5dba5da1fd890150b0c6455cb4f58b1952522525",
+    "c97ca9a559850ce97a04a96def6d99a9e0e0e2ab14e6b8df265fc0b3",
+    "20794655980c91d8bbb4c1ea97618a4bf03f42581948b2ee4ee7ad67"
+};
 
 int main()
 {
-    load_test_messages();
+    bool success = true;
 
-    // Load expected hashes
-    char expected_hashes[5][SHA224_DIGEST_LEN * 2 + 1] = { '\0' };
-
-    char file_path[27] = { '\0' };
-    FILE * file_handle;
+    TestContext * contexts[5] = { NULL };
 
     for (int i = 0; i < 5; ++i)
     {
-        sprintf(file_path, "./data/message%d/sha224.txt", i + 1);
-        file_handle = fopen(file_path, "r");
-        fgets(expected_hashes[i], SHA224_DIGEST_LEN * 2 + 1, file_handle);
-        fclose(file_handle);
+        contexts[i] = TestContext_Init(
+            i + 1, 
+            expected_digests[i], 
+            SHA224_DIGEST_LEN
+        );
+        
+        success = success && TestContext_Run(contexts[i], sha224);
+        TestContext_Free(contexts[i]);
     }
 
-    char actual_hashes[5][SHA224_DIGEST_LEN * 2 + 1];
-
-    for (int i = 0; i < 5; ++i)
-    {
-        sha224(actual_hashes[i], test_messages[i], strlen(test_messages[i]), HEX_STRING_LOWER);
-        assert(!strcmp(expected_hashes[i], actual_hashes[i]));
-    }
-
-    return 0;
+    return success ? 0 : -1;
 }

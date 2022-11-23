@@ -1,8 +1,16 @@
-#include "internal.h"
 
-//====================//
-// API IMPLEMENTATION //
-//====================//
+//********************************************************//
+//                                                        //
+// libiusha                                               //
+//                                                        //
+// Repository:  https://github.com/islandu/iusha          //
+// Author:      Daniel Thompson, Ph.D (2022)              //
+// File:        src/sha512.c                              //
+// Description: Implementation of sha512() hash function  //
+//                                                        //
+//********************************************************//
+
+#include "iusha/internal.h"
 
 ShaComputationResult
 sha512(
@@ -18,6 +26,16 @@ sha512(
 
     if (!message && message_len)
         return NULL_MESSAGE_POINTER;
+    
+    switch (format)
+    {
+        case OCTET_ARRAY:
+        case HEX_STRING_LOWER:
+        case HEX_STRING_UPPER:
+            break;
+        default:
+            return INVALID_DIGEST_FORMAT;
+    }
 
     // Initialize hash
     uint64_t hash_words[8] = 

@@ -1,8 +1,16 @@
-#include "internal.h"
 
-//====================//
-// API IMPLEMENTATION //
-//====================//
+//********************************************************//
+//                                                        //
+// libiusha                                               //
+//                                                        //
+// Repository:  https://github.com/islandu/iusha          //
+// Author:      Daniel Thompson, Ph.D (2022)              //
+// File:        src/sha256.c                              //
+// Description: Implementation of sha256() hash function  //
+//                                                        //
+//********************************************************//
+
+#include "iusha/internal.h"
 
 ShaComputationResult
 sha256(
@@ -21,6 +29,16 @@ sha256(
 
     if (message_len > SHA256_MAX_MSG_LEN)
         return UNSUPPORTED_DATA_SIZE;
+    
+    switch (format)
+    {
+        case OCTET_ARRAY:
+        case HEX_STRING_LOWER:
+        case HEX_STRING_UPPER:
+            break;
+        default:
+            return INVALID_DIGEST_FORMAT;
+    }
 
     // Initialize hash
     uint32_t hash_words[8] = 

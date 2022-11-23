@@ -25,7 +25,7 @@ int main()
             SHA384_DIGEST_LEN
         );
         
-        success = success && TestContext_Run(contexts[i], sha384);
+        success = success && TestContext_RunGeneric(contexts[i], SHA384);
         TestContext_Free(contexts[i]);
     }
 

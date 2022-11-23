@@ -1,3 +1,15 @@
+
+//********************************************************//
+//                                                        //
+// libiusha                                               //
+//                                                        //
+// Repository:  https://github.com/islandu/iusha          //
+// Author:      Daniel Thompson, Ph.D (2022)              //
+// File:        include/iusha/iusha.h                     //
+// Description: Public API specification                  //
+//                                                        //
+//********************************************************//
+
 #ifndef IUSHA_H
 #define IUSHA_H
 
@@ -7,9 +19,28 @@
 extern "C" {
 #endif
 
-//===================//
-// API SPECIFICATION //
-//===================//
+// ShaType
+// Enum indicating which secure hash algorithm to compute for master sha() function
+//
+// Members:
+//   SHA1      
+//   SHA224    
+//   SHA256    
+//   SHA384    
+//   SHA512    
+//   SHA512_224
+//   SHA512_256
+
+typedef enum {
+    SHA1        = 0,
+    SHA224      = 1,
+    SHA256      = 2,
+    SHA384      = 3,
+    SHA512      = 4,
+    SHA512_224  = 5,
+    SHA512_256  = 6
+
+} ShaType;
 
 // ShaComputationResult
 // Enum returned from hash-computation functions to indicate success or reason for failure
@@ -23,9 +54,11 @@ extern "C" {
 typedef enum {
 
     HASH_COMPUTED           = 0,
-    UNSUPPORTED_DATA_SIZE   = 1,
-    NULL_MESSAGE_POINTER    = 2,
-    NULL_DIGEST_POINTER     = 3
+    INVALID_ALGORITHM       = 1,
+    INVALID_DIGEST_FORMAT   = 2,
+    UNSUPPORTED_DATA_SIZE   = 3,
+    NULL_MESSAGE_POINTER    = 4,
+    NULL_DIGEST_POINTER     = 5
 
 } ShaComputationResult;
 
@@ -44,6 +77,15 @@ typedef enum {
     HEX_STRING_UPPER    = 2
 
 } ShaDigestFormat;
+
+// hasher_t
+// Function-pointer type that matches the non-generic hashing functions' signatures
+typedef ShaComputationResult (* hasher_t)(
+    uint8_t *, 
+    const uint8_t *, 
+    const uint64_t, 
+    const ShaDigestFormat
+);
 
 // sha1()
 // Populates a buffer with the SHA-1 hash digest for the given message input
@@ -179,6 +221,27 @@ sha512_224(
 
 ShaComputationResult
 sha512_256(
+    uint8_t * digest, 
+    const uint8_t * message, 
+    const uint64_t message_len,
+    const ShaDigestFormat format
+);
+
+// sha()
+// Generic function for which the caller specifies the SHA-X algorithm to compute
+//
+// Return value:
+//     ShaComputationResult enum indicating successful hash computation or reason for error
+//
+// Parameters:
+//     digest       Pointer to destination buffer for hash digest
+//     message      Pointer to input data
+//     message_len  Number of bytes in input data
+//     format       Enum indicating digest format (raw bytes, uppercase/lowercase hexadecimal)
+
+ShaComputationResult
+sha(
+    ShaType algorithm,
     uint8_t * digest, 
     const uint8_t * message, 
     const uint64_t message_len,
