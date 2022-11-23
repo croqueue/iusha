@@ -1,7 +1,19 @@
-#include "internal.h"
+
+//********************************************************//
+//                                                        //
+// libiusha                                               //
+//                                                        //
+// Repository:  https://github.com/islandu/iusha          //
+// Author:      Daniel Thompson, Ph.D (2022)              //
+// File:        src/compute.c                             //
+// Description: Internal hash-computation functions       //
+//                                                        //
+//********************************************************//
+
+#include "iusha/internal.h"
 
 //===========//
-// CONSTANTS //
+// Constants //
 //===========//
 
 static const uint32_t SHA1_CONSTANTS[4] =
@@ -55,15 +67,8 @@ static const uint64_t SHA2_CONSTANTS[80] =
 };
 
 //==================//
-// STATIC FUNCTIONS //
+// Static Functions //
 //==================//
-
-static uint64_t
-pad_message(
-    uint8_t * pad, 
-    const uint64_t data_len, 
-    const uint8_t block_len
-);
 
 static uint64_t
 pad_message_to_512(
@@ -108,36 +113,33 @@ static uint64_t
 pack_64(const uint8_t * bytes);
 
 //============================//
-// HASH-COMPUTATION FUNCTIONS //
+// Hash-Computation Functions //
 //============================//
 
 void
 compute_160(
     uint32_t * hash_words, 
-    const uint8_t * data, 
-    const uint64_t length
+    const uint8_t * message, 
+    const uint64_t message_len
 )
 {
-    // DATA PREPROCESSING
-
+    // Data pre-processing
     uint8_t pad[72] = { 0x00 };
-    uint64_t block_count = pad_message_to_512(pad, length);
+    uint64_t block_count = pad_message_to_512(pad, message_len);
 
-    // MESSAGE-BLOCK ITERATION
-
+    // Message-block iteration
     uint32_t message_schedule[80] = { 0x00 };
     uint32_t a, b, c, d, e, tmp;
     uint8_t t;
 
     for (uint64_t i = 0; i < block_count; ++i)
     {
-        // MESSAGE-SCHEDULE PREPARATION
-
+        // Message-schedule preparation
         // t = 0..16 (32-bit words from message block)
         for (t = 0; t < 16; ++t)
         {
             message_schedule[t] = 
-                read_message_word_32(data, length, pad, i, t);
+                read_message_word_32(message, message_len, pad, i, t);
         }
 
         // t = 16..80
@@ -151,6 +153,7 @@ compute_160(
             message_schedule[t] = ROTL(tmp, 1);
         }
 
+        // Hash calculations
         a = hash_words[0];
         b = hash_words[1];
         c = hash_words[2];
@@ -232,30 +235,27 @@ compute_160(
 void
 compute_256(
     uint32_t * hash_words, 
-    const uint8_t * data, 
-    const uint64_t length
+    const uint8_t * message, 
+    const uint64_t message_len
 )
 {
-    // DATA PREPROCESSING
-
+    // Data pre-processing
     uint8_t pad[72] = { 0x00 };
-    uint64_t block_count = pad_message_to_512(pad, length);
+    uint64_t block_count = pad_message_to_512(pad, message_len);
 
-    // MESSAGE-BLOCK ITERATION
-
+    // Message-block iteration
     uint32_t message_schedule[64] = { 0x00 };
     uint32_t a, b, c, d, e, f, g, h, tmp1, tmp2;
     uint8_t t;
 
     for (uint64_t i = 0; i < block_count; ++i)
     {
-        // MESSAGE-SCHEDULE PREPARATION
-
+        // Message-schedule preparation
         // t = 0..16 (32-bit words from message block)
         for (t = 0; t < 16; ++t)
         {
             message_schedule[t] =
-                read_message_word_32(data, length, pad, i, t);
+                read_message_word_32(message, message_len, pad, i, t);
         }
 
         // t = 16..64
@@ -268,8 +268,7 @@ compute_256(
                 message_schedule[t - 16]);
         }
 
-        // HASH CALCULATIONS
-
+        // Hash calculations
         a = hash_words[0];
         b = hash_words[1];
         c = hash_words[2];
@@ -314,30 +313,27 @@ compute_256(
 void
 compute_512(
     uint64_t * hash_words, 
-    const uint8_t * data, 
-    const uint64_t length
+    const uint8_t * message, 
+    const uint64_t message_len
 )
 {
-    // DATA PREPROCESSING
-
+    // Data pre-processing
     uint8_t pad[144] = { 0x00 };
-    uint64_t block_count = pad_message_to_1024(pad, length);
+    uint64_t block_count = pad_message_to_1024(pad, message_len);
 
-    // MESSAGE-BLOCK ITERATION
-
+    // Message-block iteration
     uint64_t message_schedule[80] = { 0x00 };
     uint64_t a, b, c, d, e, f, g, h, tmp1, tmp2;
     uint8_t t;
 
     for (uint64_t i = 0; i < block_count; ++i)
     {
-        // MESSAGE-SCHEDULE PREPARATION
-
+        // Message-schedule preparation
         // t = 0..16 (64-bit words from message block)
         for (t = 0; t < 16; ++t)
         {
             message_schedule[t] = 
-                read_message_word_64(data, length, pad, i, t);
+                read_message_word_64(message, message_len, pad, i, t);
         }
 
         // t = 16..80
@@ -350,8 +346,7 @@ compute_512(
                 message_schedule[t - 16]);
         }
 
-        // HASH CALCULATIONS
-
+        // Hash calculations
         a = hash_words[0];
         b = hash_words[1];
         c = hash_words[2];
@@ -394,7 +389,7 @@ compute_512(
 }
 
 //=======================//
-// MISC SHARED FUNCTIONS //
+// Misc Shared Functions //
 //=======================//
 
 void
@@ -405,24 +400,39 @@ unpack_32(
     const ShaDigestFormat format
 )
 {
+    uint8_t word_index, pos_in_word, r_shift;
+
     if (!format)
     {
         for (uint8_t i = 0; i < byte_count; ++i)
         {
-            *(buf++) = (uint8_t)(words[i / 4] >> ((3 - (i % 4)) << 3));
+            word_index = i / 4;
+            pos_in_word = i % 4;
+            r_shift = (3 - pos_in_word) << 3;
+            *(buf++) = (uint8_t)(words[word_index] >> r_shift);
         }
 
         return;
     }
     
-    uint8_t byte, digit, alpha_addend;
-    alpha_addend = format == HEX_STRING_UPPER ? 55 : 87;
+    uint8_t byte, digit, a_add;
+
+    a_add = (format == HEX_STRING_UPPER ? 'A' : 'a') - 10;
 
     for (uint8_t i = 0; i < byte_count; ++i)
     {
-        byte = (uint8_t)(words[i / 4] >> ((3 - (i % 4)) << 3));
-        *(buf++) = (digit = byte / 16) + ((digit < 10) ? 48 : alpha_addend);
-        *(buf++) = (digit = byte % 16) + ((digit < 10) ? 48 : alpha_addend);
+        word_index = i / 4;
+        pos_in_word = i % 4;
+        r_shift = (3 - pos_in_word) << 3;
+        byte = (uint8_t)(words[word_index] >> r_shift);
+
+        // Parse left hex digit
+        digit = byte / 16;
+        *(buf++) = digit + (digit < 10 ? '0' : a_add);
+
+        // Parse right hex digit
+        digit = byte % 16;
+        *(buf++) = digit + (digit < 10 ? '0' : a_add);
     }
 
     *buf = '\0';
@@ -436,71 +446,46 @@ unpack_64(
     const ShaDigestFormat format
 )
 {
+    uint8_t word_index, pos_in_word, r_shift;
+
     if (!format)
     {
         for (uint8_t i = 0; i < byte_count; ++i)
         {
-            *(buf++) = (uint8_t)(words[i / 8] >> ((7 - (i % 8)) << 3));
+            word_index = i / 8;
+            pos_in_word = i % 8;
+            r_shift = (7 - (pos_in_word)) << 3;
+            *(buf++) = (uint8_t)(words[word_index] >> r_shift);
         }
 
         return;
     }
 
-    uint8_t byte, digit, alpha_addend;
-    alpha_addend = format == HEX_STRING_UPPER ? 55 : 87;
+    uint8_t byte, digit, a_add;
+    a_add = (format == HEX_STRING_UPPER ? 'A' : 'a') - 10;
 
     for (uint8_t i = 0; i < byte_count; ++i)
     {
-        byte = (uint8_t)(words[i / 8] >> ((7 - (i % 8)) << 3));
-        *(buf++) = (digit = byte / 16) + ((digit < 10) ? 48 : alpha_addend);
-        *(buf++) = (digit = byte % 16) + ((digit < 10) ? 48 : alpha_addend);
+        word_index = i / 8;
+        pos_in_word = i % 8;
+        r_shift = (7 - (pos_in_word)) << 3;
+        byte = (uint8_t)(words[word_index] >> r_shift);
+
+        // Parse left hex digit
+        digit = byte / 16;
+        *(buf++) = digit + (digit < 10 ? '0' : a_add);
+
+        // Parse right hex digit
+        digit = byte % 16;
+        *(buf++) = digit + (digit < 10 ? '0' : a_add);
     }
 
     *buf = '\0';
 }
 
 //=============================//
-// STATIC-FUNCTION DEFINITIONS //
+// Static-Function Definitions //
 //=============================//
-
-static uint64_t
-pad_message(
-    uint8_t * pad, 
-    const uint64_t data_len, 
-    const uint8_t block_len
-)
-{
-    // Block length in bytes
-    uint8_t block_bytes = block_len >> 3;
-
-    // Return if message length does not require padding
-    if (data_len && !(data_len % block_bytes))
-        return data_len / block_len;
-
-    // Append '1' bit after message
-    pad[0] = 0x80;
-
-    // If message is empty, return 1 block (padding only)
-    if (!data_len)
-        return 1;
-
-    // Calculate size of padding
-    uint8_t pad_len = (uint8_t)(block_len - (data_len % block_len));
-    
-    if (pad_len <= block_bytes)
-        pad_len += block_len;
-
-    if (data_len > SHA256_MAX_MSG_LEN)
-        pad[pad_len - 9] = (uint8_t)(data_len >> 61);
-
-    uint64_t bit_count = data_len << 3;
-
-    for (uint8_t i = 8; i; --i)
-        pad[pad_len - i] = (uint8_t)(bit_count >> ((i - 1) << 3));
-
-    // Return block count (division first to avoid overflow)
-    return (data_len / block_len) + (pad_len < block_len ? 1 : 2);
-}
 
 static uint64_t
 pad_message_to_512(
@@ -581,8 +566,8 @@ pad_message_to_1024(
 
 static uint32_t
 read_message_word_32(
-    const uint8_t * data,
-    const uint64_t data_length,
+    const uint8_t * message,
+    const uint64_t message_len,
     const uint8_t * pad,
     const uint64_t block_index,
     const uint8_t word_index
@@ -591,28 +576,30 @@ read_message_word_32(
     uint64_t start_byte = (block_index * 64) + (word_index * 4);
 
     // Complete 32-bit word from input data
-    if ((data_length >= 4) && (start_byte < data_length - 3))
-        return pack_32(data + start_byte);
+    if ((message_len >= 4) && (start_byte < message_len - 3))
+        return pack_32(message + start_byte);
 
     // Complete 32-bit word from padding bytes
-    if (start_byte >= data_length)
-        return pack_32(pad + (start_byte - data_length));
+    if (start_byte >= message_len)
+        return pack_32(pad + (start_byte - message_len));
 
     // 32-bit word that spans input data and padding bytes
     uint32_t word = 0;
-    uint8_t partial_len, byte_pos;
-    partial_len = (uint8_t)(data_length % 4);
+    uint64_t message_index;
+    uint8_t partial_len, byte_pos, l_shift;
+    partial_len = (uint8_t)(message_len % 4);
 
     for (byte_pos = 0; byte_pos < partial_len; ++byte_pos)
     {
-        word |= (uint32_t)data[data_length - partial_len + byte_pos]
-            << ((3 - byte_pos) << 3);
+        message_index = message_len - partial_len + byte_pos;
+        l_shift = (3 - byte_pos) << 3;
+        word |= (uint32_t)message[message_index] << l_shift;
     }
 
     for (; byte_pos < 4; ++byte_pos)
     {
-        word |= (uint32_t)pad[byte_pos - partial_len] 
-            << ((3 - byte_pos) << 3);
+        l_shift = (3 - byte_pos) << 3;
+        word |= (uint32_t)pad[byte_pos - partial_len] << l_shift;
     }
     
     return word;
@@ -621,8 +608,8 @@ read_message_word_32(
 
 static uint64_t
 read_message_word_64(
-    const uint8_t * data,
-    const uint64_t data_length,
+    const uint8_t * message,
+    const uint64_t message_len,
     const uint8_t * pad,
     const uint64_t block_index,
     const uint8_t word_index
@@ -631,28 +618,30 @@ read_message_word_64(
     uint64_t start_byte = (block_index * 128) + (word_index * 8);
 
     // Complete 64-bit word from input data
-    if ((data_length >= 8) && (start_byte < data_length - 7))
-        return pack_64(data + start_byte);
+    if ((message_len >= 8) && (start_byte < message_len - 7))
+        return pack_64(message + start_byte);
 
     // Complete 64-bit word from padding bytes
-    if (start_byte >= data_length)
-        return pack_64(pad + (start_byte - data_length));
+    if (start_byte >= message_len)
+        return pack_64(pad + (start_byte - message_len));
 
     // 64-bit word that spans input data and padding bytes
     uint64_t word = 0;
-    uint8_t partial_len, byte_pos;
-    partial_len = (uint8_t)(data_length % 8);
+    uint64_t message_index;
+    uint8_t partial_len, byte_pos, l_shift;
+    partial_len = (uint8_t)(message_len % 8);
 
     for (byte_pos = 0; byte_pos < partial_len; ++byte_pos)
     {
-        word |= (uint64_t)data[data_length - partial_len + byte_pos]
-            << ((7 - byte_pos) << 3);
+        message_index = message_len - partial_len + byte_pos;
+        l_shift = (7 - byte_pos) << 3;
+        word |= (uint64_t)message[message_index] << l_shift;
     }
 
     for (; byte_pos < 8; ++byte_pos)
     {
-        word |= (uint64_t)pad[byte_pos - partial_len] 
-            << ((7 - byte_pos) << 3);
+        l_shift = (7 - byte_pos) << 3;
+        word |= (uint64_t)pad[byte_pos - partial_len] << l_shift;
     }
     
     return word;
@@ -662,7 +651,7 @@ static uint32_t
 wrap_sum_32(int count, ...)
 {
     va_list arg_list;
-    uint32_t sum = 0, addend, overflow_addend;
+    uint32_t sum = 0, addend, overflow_thresh;
 
     va_start(arg_list, count);
 
@@ -680,12 +669,12 @@ wrap_sum_32(int count, ...)
         }
 
         // Determine minimum addend that would cause overflow
-        overflow_addend = UINT32_MAX - sum + 1;
+        overflow_thresh = UINT32_MAX - sum + 1;
 
         // If sum will overflow, assign difference of addend & overflow_addend
         // (Equivalent to addition modulo 2^32)
-        sum = (addend >= overflow_addend) 
-            ? (addend - overflow_addend) 
+        sum = (addend >= overflow_thresh) 
+            ? (addend - overflow_thresh) 
             : (sum + addend);
     }
 
@@ -697,7 +686,7 @@ static uint64_t
 wrap_sum_64(int count, ...)
 {
     va_list arg_list;
-    uint64_t sum = 0, addend, overflow_addend;
+    uint64_t sum = 0, addend, overflow_thresh;
 
     va_start(arg_list, count);
 
@@ -715,12 +704,12 @@ wrap_sum_64(int count, ...)
         }
 
         // Determine minimum addend that would cause overflow
-        overflow_addend = UINT64_MAX - sum + 1;
+        overflow_thresh = UINT64_MAX - sum + 1;
 
         // If sum will overflow, assign difference of addend & overflow_addend
         // (Equivalent to addition modulo 2^64)
-        sum = (addend >= overflow_addend) 
-            ? (addend - overflow_addend) 
+        sum = (addend >= overflow_thresh) 
+            ? (addend - overflow_thresh) 
             : (sum + addend);
     }
 
@@ -732,9 +721,13 @@ static uint32_t
 pack_32(const uint8_t * bytes)
 {
     uint32_t word = 0;
+    uint8_t l_shift;
 
     for (uint8_t i = 0; i < 4; ++i)
-        word |= (uint32_t)bytes[i] << ((3 - i) << 3);
+    {
+        l_shift = (3 - i) << 3;
+        word |= (uint32_t)bytes[i] << l_shift;
+    }
 
     return word;
 }
@@ -743,9 +736,13 @@ static uint64_t
 pack_64(const uint8_t * bytes)
 {
     uint64_t word = 0;
+    uint8_t l_shift;
 
     for (uint8_t i = 0; i < 8; ++i)
-        word |= (uint64_t)bytes[i] << ((7 - i) << 3);
+    {
+        l_shift = (7 - i) << 3;
+        word |= (uint64_t)bytes[i] << l_shift;
+    }
 
     return word;
 }

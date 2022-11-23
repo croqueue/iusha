@@ -1,3 +1,15 @@
+
+//********************************************************//
+//                                                        //
+// libiusha                                               //
+//                                                        //
+// Repository:  https://github.com/islandu/iusha          //
+// Author:      Daniel Thompson, Ph.D (2022)              //
+// File:        src/include/iusha/internal.h              //
+// Description: Internal hash-computation functions       //
+//                                                        //
+//********************************************************//
+
 #ifndef IUSHA_INTERNAL_H
 #define IUSHA_INTERNAL_H
 
@@ -6,7 +18,7 @@
 #include "iusha/iusha.h"
 
 //========================//
-// SHARED FUNCTION MACROS //
+// Shared Function Macros //
 //========================//
 
 // General bitwise functions
@@ -31,32 +43,32 @@
 #define LSIGMA1_512(x)  (ROTR((x), 19) ^ ROTR((x), 61) ^ ((x) >> 6))
 
 //============================//
-// HASH-COMPUTATION FUNCTIONS //
+// Hash-Computation Functions //
 //============================//
 
 void
 compute_160(
     uint32_t * hash_words, 
-    const uint8_t * data, 
-    const uint64_t length
+    const uint8_t * message, 
+    const uint64_t message_len
 );
 
 void
 compute_256(
     uint32_t * hash_words, 
-    const uint8_t * data, 
-    const uint64_t length
+    const uint8_t * message, 
+    const uint64_t message_len
 );
 
 void
 compute_512(
     uint64_t * hash_words, 
-    const uint8_t * data, 
-    const uint64_t length
+    const uint8_t * message, 
+    const uint64_t message_len
 );
 
 //=======================//
-// MISC SHARED FUNCTIONS //
+// Misc Shared Functions //
 //=======================//
 
 void

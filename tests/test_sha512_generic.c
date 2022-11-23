@@ -25,7 +25,7 @@ int main()
             SHA512_DIGEST_LEN
         );
         
-        success = success && TestContext_Run(contexts[i], sha512);
+        success = success && TestContext_RunGeneric(contexts[i], SHA512);
         TestContext_Free(contexts[i]);
     }
 

@@ -25,7 +25,7 @@ int main()
             SHA256_DIGEST_LEN
         );
         
-        success = success && TestContext_Run(contexts[i], sha256);
+        success = success && TestContext_RunGeneric(contexts[i], SHA256);
         TestContext_Free(contexts[i]);
     }
 
