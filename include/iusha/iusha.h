@@ -47,6 +47,8 @@ typedef enum {
 // 
 // Members:
 //   HASH_COMPUTED          Selected algorithm executed successfully
+//   INVALID_ALGORITHM      Unrecognized value for 'algorithm' argument passed to sha()
+//   INVALID_DIGEST_FORMAT  Unrecognized value for 'format' argument passed to hasing function
 //   UNSUPPORTED_DATA_SIZE  Input data too large (SHA-1/SHA-256/SHA-224)
 //   NULL_MESSAGE_POINTER   Pointer to input data is NULL (length indicated as > 0)
 //   NULL_DIGEST_POINTER    Pointer to output buffer is NULL
