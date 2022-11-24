@@ -4,6 +4,27 @@
 #include <string.h>
 #include "iusha/tests/helpers.h"
 
+static const char * MESSAGE_PATHS = "./data/message%d.txt";
+static const char * HASH_PATHS = "./data/%s_hashes.txt";
+static const char * MESSAGE_READ_FAIL = "Failed to load test message from file '%s'\n";
+static const char * DIGEST_READ_FAIL = "Failed to load expected hash digests from file '%s'\n";
+
+static const char * HASH_MISMATCH = 
+    "Computed hash digest of file '%s' does not match the expected value\n"
+    "---EXPECTED: %s\n"
+    "---COMPUTED: %s\n\n";
+
+static const char * ALGORITHM_STRINGS[7] =
+{
+    "sha1",
+    "sha224",
+    "sha256",
+    "sha384",
+    "sha512",
+    "sha512_224",
+    "sha512_256"
+};
+
 static void
 hex_to_bytes(uint8_t * dest, const char * hex, uint8_t byte_count);
 
@@ -22,19 +43,25 @@ TestContext_Init(
     if (!context)
         return NULL;
     
-    sprintf(context->file_path, "./data/message%d.txt", test_message_number);
+    sprintf(context->file_path, MESSAGE_PATHS, test_message_number);
 
     FILE * file_handle = fopen(context->file_path, "r");
 
     if (!file_handle)
+    {
+        printf(MESSAGE_READ_FAIL, context->file_path);
         return NULL;
+    }
     
     fseek(file_handle, 0L, SEEK_END);
     context->file_size = (uint64_t)ftell(file_handle);
     context->file_contents = calloc(context->file_size + 1, sizeof(char));
 
     if (!context->file_contents)
+    {
+        printf(MESSAGE_READ_FAIL, context->file_path);
         return NULL;
+    }
     
     fseek(file_handle, 0L, SEEK_SET);
 
@@ -82,16 +109,12 @@ TestContext_Run(TestContext * context, hasher_t hash_function)
         HEX_STRING_LOWER
     );
 
-    printf("%s\n\n", context->actual_hashes.hex_lower);
-
     context->results[2] = hash_function(
         context->actual_hashes.hex_upper,
         context->file_contents,
         context->file_size,
         HEX_STRING_UPPER
     );
-
-    printf("%s\n\n", context->actual_hashes.hex_upper);
 
     context->match[0] = sequence_equal(
         context->expected_hashes.raw, 
@@ -109,7 +132,19 @@ TestContext_Run(TestContext * context, hasher_t hash_function)
         context->actual_hashes.hex_upper
     );
     
-    return context->match[0] && context->match[1] && context->match[2];
+    if (context->match[0] && context->match[1] && context->match[2])
+    {
+        return true;
+    }
+    else
+    {
+        printf(HASH_MISMATCH, 
+            context->file_path, 
+            context->expected_hashes.hex_lower, 
+            context->actual_hashes.hex_lower);
+        
+        return false;
+    }
 }
 
 bool
@@ -158,30 +193,81 @@ TestContext_RunGeneric(TestContext * context, ShaType algorithm)
         context->actual_hashes.hex_upper
     );
 
-    return context->match[0] && context->match[1] && context->match[2];
+    if (context->match[0] && context->match[1] && context->match[2])
+    {
+        return true;
+    }
+    else
+    {
+        printf(HASH_MISMATCH, 
+            context->file_path, 
+            context->expected_hashes.hex_lower, 
+            context->actual_hashes.hex_lower);
+        
+        return false;
+    }
 }
 
 void
 TestContext_Free(TestContext * context)
 {
+    free(context->file_contents);
     free(context);
+}
+
+bool
+load_expected_digests(char hashes[NUM_TESTS][HEX_DIGEST_BUFFER_LEN], ShaType algorithm)
+{
+    char file_path[30] = { '\0' };
+    sprintf(file_path, HASH_PATHS, ALGORITHM_STRINGS[algorithm]);
+
+    FILE * file_handle = fopen(file_path, "r");
+
+    if (!file_handle)
+    {
+        printf(DIGEST_READ_FAIL, file_path);
+        return false;
+    }
+    
+    memset(hashes, '\0', NUM_TESTS * HEX_DIGEST_BUFFER_LEN);
+    
+    int c;
+
+    for (int i = 0; i < NUM_TESTS; ++i)
+    {
+        int j = 0;
+
+        while ((c = fgetc(file_handle)) != EOF)
+        {
+            if (c == '\n')
+                break;
+
+            hashes[i][j++] = (char)c;
+        }
+    }
+
+    fclose(file_handle);
+    return true;
 }
 
 static void
 hex_to_bytes(uint8_t * dest, const char * hex, uint8_t byte_count)
 {
     char c;
+    uint8_t byte;
 
     for (uint8_t i = 0; i < byte_count; ++i)
     {
-        dest[i] = 0x00;
+        byte = 0x00;
 
         for (uint8_t j = 0; j < 2; ++j)
         {
-            dest[i] *= 16;
+            byte *= 16;
             c = tolower(*hex++);
-            dest[i] += c - (c <= '9' ? '0': 'a' - 10);
+            byte += c - (c <= '9' ? '0': 'a' - 10);
         }
+
+        dest[i] = byte;
     }
 }
 

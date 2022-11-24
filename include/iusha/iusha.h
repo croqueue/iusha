@@ -249,7 +249,7 @@ sha(
 );
 
 //=================//
-// MACRO CONSTANTS //
+// Macro Constants //
 //=================//
 
 // Hash-digest lengths in bytes 
