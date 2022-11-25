@@ -93,7 +93,7 @@ The example program below calculates and prints the SHA-256 hash for a UTF-8 str
 #include "iusha/iusha.h"
 
 static bool
-load_file(uint8_t * file_buffer, uint64_t * file_size);
+load_file(uint8_t * file_buffer, const char * file_path, uint64_t * file_size);
 
 int main()
 {
