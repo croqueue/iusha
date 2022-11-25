@@ -30,7 +30,7 @@ $ ctest --verbose
 ```
 
 ## Documentation
-`libiusha` was designed to be very easy to use and work solely with input data held in RAM (e.g., small- to medium-sized files that will fit in memory, ASCII/UTF-8 strings, etc.). If incremental computation of hash digests of large amounts of data via streams is needed, you may want to go with another library.
+`libiusha` was designed to be very easy to use and to work solely with input data held in RAM (e.g., small- to medium-sized files that will fit in memory, ASCII/UTF-8 strings, etc.). If incremental computation of hash digests of large amounts of data via streams is needed, you may want to go with another library (but future enhancements to this library may include that functionality).
 
 ### Library Functions
 There are two options for hash computation. Callers can either call the generic `sha()` function and specify the algorithm used for computation in the first argument or call the function for the desired algorithm directly (`sha1()`, `sha224()`, `sha256()`, `sha384()`, `sha512()`, `sha512_224()`, `sha512_256()`).
@@ -83,74 +83,105 @@ typedef enum {
 } ShaComputationResult;
 ```
 
-### Example Code
-The example program below calculates and prints the SHA-256 hash for a UTF-8 string and a file read into memory.
-
+### Hashing Files or Byte Arrays (using `sha256()` function)
+Prior to hash computation, you will need to load the file into memory, e.g.:
 ```c
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdint.h>
-#include "iusha/iusha.h"
+// #include <stdio.h>
+// #include "iusha/iusha.h"
 
-static bool
-load_file(uint8_t * file_buffer, const char * file_path, uint64_t * file_size);
+uint8_t file_contents[4096];
+uint64_t file_size = 0;
+const char * file_path = "path/to/your/file";
 
-int main()
+// Open file in "read binary" mode so the bytes are read without transformation
+FILE * file_handle = fopen(file_path, "rb");
+
+if (!file_handle)
 {
-    const char * input_str = "The trüth is öut there";
-    uint8_t input_file[4096];
-    uint64_t file_size;
-
-    // Buffers for raw hash bytes
-    uint8_t str_hash_bytes[SHA256_DIGEST_LEN];
-    uint8_t file_hash_bytes[SHA256_DIGEST_LEN];
-
-    // Buffers for hashes as hexadecimal strings
-    char str_hash_hex[SHA256_DIGEST_LEN * 2 + 1];
-    char file_hash_hex[SHA256_DIGEST_LEN * 2 + 1];
-
-    // Load file into memory
-    if (!load_file(input_file, "/path/to/file", &file_size))
-        return -1;
-
-    // Compute hashes in raw bytes
-    sha256(str_hash_bytes, input_str, strlen(input_str), OCTET_ARRAY);
-    sha256(file_hash_bytes, input_file, file_size, OCTET_ARRAY);
-
-    // Compute hashes in hexadecimal format (lowercase)
-    sha256(str_hash_hex, input_str, strlen(input_str), HEX_STRING_LOWER);
-    sha256(file_hash_hex, input_file, file_size, HEX_STRING_LOWER);
-
-    printf("SHA-256 hash of 'input_str' (hexadecimal lowercase):\n%s\n", str_hash_hex);
-    printf("SHA-256 hash of 'input_file' (hexadecimal lowercase):\n%s\n", file_hash_hex);
-
-    // Compute hashes in hexadecimal format (uppercase)
-    sha256(str_hash_hex, input_str, strlen(input_str), HEX_STRING_UPPER);
-    sha256(file_hash_hex, input_file, file_size, HEX_STRING_UPPER);
-
-    printf("SHA-256 hash of 'input_str' (hexadecimal uppercase):\n%s\n", str_hash_hex);
-    printf("SHA-256 hash of 'input_file' (hexadecimal uppercase):\n%s\n", file_hash_hex);
-
-    return 0;
+    printf("Could not open file '%s'\n", file_path);
+    // Perform any other appropriate actions on failure
 }
 
-static bool
-load_file(uint8_t * file_buffer, const char * file_path, uint64_t * file_size)
+int byte;
+
+while ((byte = fgetc(file_handle)) != EOF)
 {
-    *file_size = 0;
-    FILE * file_handle = fopen(file_path, "rb");
+    file_contents[file_size++] = (uint8_t)byte;
+}
 
-    if (!file_handle)
-        return false;
-    
-    int byte;
+fclose(file_handle)
+```
+If you just want the raw bytes of the hash digest, create a `uint8_t` buffer using the appropriate macro constant from `iusha.h`. Then call the hashing function and pass `OCTET_ARRAY` as the argument for the `format` parameter.
+```c
+// #include "iusha/iusha.h"
 
-    while ((byte = fgetc(file_handle)) != EOF)
-    {
-        file_buffer[(*file_size)++] = (uint8_t)byte;
-    }
+uint8_t hash_bytes[SHA256_DIGEST_LEN];
+ShaComputationResult result;
 
-    return true;
+result = sha256(hash_bytes, file_contents, file_size, OCTET_ARRAY);
+
+if (result != HASH_COMPUTED)
+{
+    // Something went wrong
+}
+```
+If you prefer the hash digest to be formatted as a hexadecimal string, create a `char` buffer using the appropriate macro constant from `iusha.h`, but double its size and add 1 for the null terminator. Then call the hashing function and pass either `HEX_STRING_LOWER` or `HEX_STRING_UPPER` as the argument for the `format` parameter.
+```c
+// #include "iusha/iusha.h"
+
+// Double the hash-digest length and add 1 for the null terminator
+char hash_hex[SHA256_DIGEST_LEN * 2 + 1];
+ShaComputationResult result;
+
+// Lowercase hexadecimal string
+result = sha256(hash_hex, file_contents, file_size, HEX_STRING_LOWER);
+// Uppercase hexadecimal string
+result = sha256(hash_hex, file_contents, file_size, HEX_STRING_UPPER);
+
+if (result != HASH_COMPUTED)
+{
+    // Something went wrong
+}
+```
+
+### Hashing Strings (using `sha256()` function)
+ASCII/UTF-8 strings can be hashed directly. If you are working with strings that use a different encoding (e.g., UTF-16LE, UTF-32) and the contents are not stored in an array of an 8-bit type (e.g. `wchar_t`), you will have to perform some pre-processing to flatten the data into an array of bytes (and a simple internet search can help you there). The examples below will use a UTF-8 string as the input message.
+
+If you just want the raw bytes of the hash digest, create a `uint8_t` buffer using the appropriate macro constant from `iusha.h`. Then call the hashing function and pass `OCTET_ARRAY` as the argument for the `format` parameter.
+```c
+// #include <string.h>
+// #include "iusha/iusha.h"
+
+const char * utf8_str = "The trüth is öut there";
+uint8_t hash_bytes[SHA256_DIGEST_LEN];
+ShaComputationResult result;
+
+result = sha256(hash_bytes, utf8_str, strlen(utf8_str), OCTET_ARRAY);
+
+if (result != HASH_COMPUTED)
+{
+    // Something went wrong
+}
+```
+If you prefer the hash digest to be formatted as a hexadecimal string, create a `char` buffer using the appropriate macro constant from `iusha.h`, but double its size and add 1 for the null terminator. Then call the hashing function and pass either `HEX_STRING_LOWER` or `HEX_STRING_UPPER` as the argument for the `format` parameter.
+```c
+// #include <string.h>
+// #include "iusha/iusha.h"
+
+const char * utf8_str = "The trüth is öut there";
+
+// Double the hash-digest length and add 1 for the null terminator
+char hash_hex[SHA256_DIGEST_LEN * 2 + 1];
+ShaComputationResult result;
+
+// Lowercase hexadecimal string
+result = sha256(hash_hex, utf8_str, strlen(utf8_str), HEX_STRING_LOWER);
+// Uppercase hexadecimal string
+result = sha256(hash_hex, utf8_str, strlen(utf8_str), HEX_STRING_UPPER);
+
+if (result != HASH_COMPUTED)
+{
+    // Something went wrong
 }
 ```
 
