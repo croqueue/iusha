@@ -1,17 +1,17 @@
 
 //********************************************************//
 //                                                        //
-// libiusha                                               //
+// libsharptwoth                                               //
 //                                                        //
-// Repository:  https://github.com/islandu/iusha          //
+// Repository:  https://github.com/islandu/sharptwoth          //
 // Author:      Daniel Thompson, Ph.D (2022)              //
-// File:        include/iusha/iusha.h                     //
+// File:        include/sharptwoth/sharptwoth.h                     //
 // Description: Public API specification                  //
 //                                                        //
 //********************************************************//
 
-#ifndef IUSHA_H
-#define IUSHA_H
+#ifndef SHARP2TH_H
+#define SHARP2TH_H
 
 #include <stdint.h>
 
@@ -280,4 +280,4 @@ sha(
 }
 #endif
 
-#endif // IUSHA_H
+#endif // SHARP2TH_H

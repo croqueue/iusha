@@ -1,10 +1,10 @@
-#ifndef IUSHA_TESTS_HELPERS_H
-#define IUSHA_TESTS_HELPERS_H
+#ifndef SHARP2TH_TESTS_HELPERS_H
+#define SHARP2TH_TESTS_HELPERS_H
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "iusha/iusha.h"
+#include "sharptwoth/sharptwoth.h"
 
 #define NUM_TESTS 5
 #define HEX_DIGEST_BUFFER_LEN 129
@@ -64,4 +64,4 @@ TestContext_Free(TestContext * context);
 bool
 load_expected_digests(char hashes[NUM_TESTS][HEX_DIGEST_BUFFER_LEN], ShaType algorithm);
 
-#endif // IUSHA_TESTS_HELPERS_H
+#endif // SHARP2TH_TESTS_HELPERS_H

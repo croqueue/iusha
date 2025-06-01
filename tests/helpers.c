@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "iusha/tests/helpers.h"
+#include "sharptwoth/tests/helpers.h"
 
 static const char * MESSAGE_PATHS = "./data/message%d.txt";
 static const char * HASH_PATHS = "./data/%s_hashes.txt";

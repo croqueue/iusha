@@ -1,5 +1,2 @@
-.*
-!/.gitignore
-/build
-/bin
-/obj
+.vscode/
+build/

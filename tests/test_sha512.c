@@ -1,5 +1,5 @@
 #include <stdbool.h>
-#include "iusha/tests/helpers.h"
+#include "sharptwoth/tests/helpers.h"
 
 int main()
 {

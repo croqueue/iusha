@@ -1,21 +1,21 @@
 
 //********************************************************//
 //                                                        //
-// libiusha                                               //
+// libsharptwoth                                               //
 //                                                        //
-// Repository:  https://github.com/islandu/iusha          //
+// Repository:  https://github.com/islandu/sharptwoth          //
 // Author:      Daniel Thompson, Ph.D (2022)              //
-// File:        src/include/iusha/internal.h              //
+// File:        src/include/sharptwoth/internal.h              //
 // Description: Internal hash-computation functions       //
 //                                                        //
 //********************************************************//
 
-#ifndef IUSHA_INTERNAL_H
-#define IUSHA_INTERNAL_H
+#ifndef SHARP2TH_INTERNAL_H
+#define SHARP2TH_INTERNAL_H
 
 #include <stdarg.h>
 #include <stdint.h>
-#include "iusha/iusha.h"
+#include "sharptwoth/sharptwoth.h"
 
 //========================//
 // Shared Function Macros //
@@ -87,4 +87,4 @@ unpack_64(
     const ShaDigestFormat format
 );
 
-#endif // IUSHA_INTERNAL_H
+#endif // SHARP2TH_INTERNAL_H

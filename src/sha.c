@@ -1,16 +1,16 @@
 
 //***********************************************************//
 //                                                           //
-// libiusha                                                  //
+// libsharptwoth                                                  //
 //                                                           //
-// Repository:  https://github.com/islandu/iusha             //
+// Repository:  https://github.com/islandu/sharptwoth             //
 // Author:      Daniel Thompson, Ph.D (2022)                 //
 // File:        src/sha.c                                    //
 // Description: Implementation of master sha() hash function //
 //                                                           //
 //***********************************************************//
 
-#include "iusha/internal.h"
+#include "sharptwoth/internal.h"
 
 ShaComputationResult
 sha(
