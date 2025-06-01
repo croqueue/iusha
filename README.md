@@ -1,5 +1,5 @@
 # `sharptwoth`
-A simple C library providing implementations of algorithms from the Secure Hash Standard (SHA-1, SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512A/256)
+A simple C library providing implementations of algorithms from the Secure Hash Standard (SHA-1, SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256)
 
 ## Overview
 This library was originally hacked together in 2022 under a different name. Though the project served its original purpose quite well, it has lain dormant since then.  
