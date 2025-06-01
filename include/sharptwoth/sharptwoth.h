@@ -3,8 +3,8 @@
 //                                                        //
 // libsharptwoth                                               //
 //                                                        //
-// Repository:  https://github.com/islandu/sharptwoth          //
-// Author:      Daniel Thompson, Ph.D (2022)              //
+// Repository:  https://github.com/croqueue/sharptwoth          //
+// Author:      Danielle Thompson, Ph.D (2022)              //
 // File:        include/sharptwoth/sharptwoth.h                     //
 // Description: Public API specification                  //
 //                                                        //
